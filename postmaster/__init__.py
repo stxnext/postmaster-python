@@ -254,3 +254,53 @@ def list_shipments(cursor=None, limit=None):
         data['limit'] = limit
 
     return HTTPTransport.get('/v1/shipments', data)
+
+
+def create_box(width, height, length, weight=None, weight_units=None,
+               size_units=None, name=None):
+    """
+    Create a user-defined box type.
+    :param width: The width of the box (required).
+    :param height: The height of the box (required).
+    :param length: The length of the box (required).
+    :param weight: The weight of the box (optional).
+    :param weight_units:
+        The units of weight: LB, OZ, KG, G (optional, default: LB).
+    :param size_units: The units of size: IN, FT, CM, M (optional, default: IN)
+    :param name: Give this box a memorable name (optional).
+    :return: Box ID.
+    Raises a postmaster.InvalidDataError when input is invalid.
+    """
+    data = {
+        'width': width,
+        'height': height,
+        'length': length,
+    }
+    if weight is not None:
+        data['weight'] = weight
+    if weight_units is not None:
+        data['weight_units'] = weight_units
+    if size_units is not None:
+        data['size_units'] = size_units
+    if name is not None:
+        data['name'] = name
+
+    return HTTPTransport.post('/v1/packages', data)
+
+
+def list_boxes(cursor=None, limit=None):
+
+    """
+    List all user-defined box types.
+    :param cursor: The cursor offset (optional).
+    :param limit: The number of boxes to get (optional, default: 10).
+    :return: Dict with keys 'cursor', 'previousCursor' and 'results'.
+        'results' is a list of boxes as a dict.
+    """
+    data = {}
+    if cursor is not None:
+        data['cursor'] = cursor
+    if limit is not None:
+        data['limit'] = limit
+
+    return HTTPTransport.get('/v1/packages', data)

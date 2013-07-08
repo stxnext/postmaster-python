@@ -170,6 +170,57 @@ class PostmasterTestCase_Urllib2(unittest.TestCase):
         )
         assert resp is not None
 
+    def testShipmentVoid(self):
+        shipment = postmaster.Shipment.create(
+            to={
+                'company':'ASLS',
+                'contact':'Joe Smith',
+                'line1':'1110 Algarita Ave.',
+                'city':'Austin',
+                'state':'TX',
+                'zip_code':'78704',
+                'phone_no':'919-720-7941'
+            },
+            from_={
+                'company':'ASLS',
+                'contact':'Joe Smith',
+                'line1':'1110 Algarita Ave.',
+                'city':'Austin',
+                'state':'TX',
+                'zip_code':'78704',
+                'phone_no':'919-720-7941'
+            },
+            packages={
+                'weight':1.5,
+                'length':10,
+                'width':6,
+                'height':8,
+            },
+            carrier='usps',
+            service='2DAY',
+        )
+        # succeed
+        self.assertTrue(postmaster.void_shipment(shipment.id))
+        # fail
+        self.assertFalse(postmaster.void_shipment(893457898937834589))
+
+    def testListShipments(self):
+        response = postmaster.list_shipments()
+        self.assertIn('cursor', response)
+        self.assertIn('previousCursor', response)
+
+    def testCreateBox(self):
+        # fail
+        with self.assertRaises(postmaster.InvalidDataError):
+            postmaster.create_box(1, 2, '345asd')
+        # succeed
+        box_id = postmaster.create_box(1, 2, 3)
+        self.assertIsInstance(box_id, int)
+
+    def testListBoxes(self):
+        response = postmaster.list_boxes()
+        self.assertIn('cursor', response)
+        self.assertIn('previousCursor', response)
 
 class PostmasterTestCase_Urlfetch(PostmasterTestCase_Urllib2):
     def setUp(self):

@@ -269,7 +269,6 @@ def create_box(width, height, length, weight=None, weight_units=None,
     :param size_units: The units of size: IN, FT, CM, M (optional, default: IN)
     :param name: Give this box a memorable name (optional).
     :return: Box ID.
-    Raises a postmaster.InvalidDataError when input is invalid.
     """
     data = {
         'width': width,
@@ -285,7 +284,8 @@ def create_box(width, height, length, weight=None, weight_units=None,
     if name is not None:
         data['name'] = name
 
-    return HTTPTransport.post('/v1/packages', data)
+    response = HTTPTransport.post('/v1/packages', data)
+    return response['id']
 
 
 def list_boxes(cursor=None, limit=None):

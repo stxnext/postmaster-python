@@ -226,3 +226,31 @@ def get_rate(carrier, to_zip, weight, from_zip=None, service='ground'):
 
 def get_token():
     return HTTPTransport.get('/v1/token')
+
+
+def void_shipment(id):
+    """
+    Cancel shipment by ID.
+    :param id: Shipment ID.
+    :return: True if when shipment was canceled. None if shipment doesn't exist.
+    """
+    status = HTTPTransport.delete('/v1/shipments/%s/void' % id)
+    if isinstance(status, dict) and status.get('message') == 'OK':
+        return True
+
+
+def list_shipments(cursor=None, limit=None):
+    """
+    List of user defined shipments.
+    :param cursor: cursor or previousCursor for shipments list querying.
+    :param limit: Quantity of shipments per query.
+    :return: Dict with keys 'cursor', 'previousCursor' and 'results'.
+        'results' is a list of shipments as a dict.
+    """
+    data = {}
+    if cursor is not None:
+        data['cursor'] = cursor
+    if limit is not None:
+        data['limit'] = limit
+
+    return HTTPTransport.get('/v1/shipments', data)

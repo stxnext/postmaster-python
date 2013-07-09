@@ -46,10 +46,14 @@ class PostmasterObject(object):
         Put object to server.
         """
         if id_:
-            response = HTTPTransport.put(
-                action and '%s/%s/%s' % (self.PATH, id_, action) or \
-                    '%s/%s' % (self.PATH, id_),
-                self._data, headers=config.headers)
+            if action == 'void':
+                response = HTTPTransport.delete(
+                    '%s/%s/%s' % (self.PATH, id_, action), headers=config.headers)
+            else:
+                response = HTTPTransport.put(
+                    action and '%s/%s/%s' % (self.PATH, id_, action) or \
+                        '%s/%s' % (self.PATH, id_),
+                    self._data, headers=config.headers)
         else:
             response = HTTPTransport.post(self.PATH, self._data, headers=config.headers)
         return response
@@ -175,8 +179,89 @@ class Shipment(PostmasterObject):
     def void(self):
         """
         Void a shipment (from an object)
+        :return: True if when shipment was canceled
         """
-        self.put(self.id, 'void')
+        status = self.put(self.id, 'void')
+        return isinstance(status, dict) and status.get('message') == 'OK'
+
+
+    @classmethod
+    def list(cls, cursor=None, limit=None):
+        """
+        List of user defined shipments.
+        :param cursor: cursor or previousCursor for shipments list querying.
+        :param limit: Quantity of shipments per query.
+        :return: Dict with keys 'cursor', 'previousCursor' and 'results'.
+            'results' is a list of shipments as a dict.
+        """
+        shipment = Shipment()
+        data = {}
+        if cursor is not None:
+            data['cursor'] = cursor
+        if limit is not None:
+            data['limit'] = limit
+
+        res = shipment.get(params=data)
+        return res.get('results'), res['cursor'], res['previousCursor']
+
+
+class Package(PostmasterObject):
+
+    PATH = '/v1/packages'
+
+    @classmethod
+    def create(cls, width, height, length, weight=None, weight_units=None,
+               size_units=None, name=None):
+        """
+        Create a user-defined box type.
+        :param width: The width of the box (required).
+        :param height: The height of the box (required).
+        :param length: The length of the box (required).
+        :param weight: The weight of the box (optional).
+        :param weight_units:
+            The units of weight: LB, OZ, KG, G (optional, default: LB).
+        :param size_units: The units of size: IN, FT, CM, M (optional, default: IN)
+        :param name: Give this box a memorable name (optional).
+        :return: Box ID.
+        """
+        package = Package()
+        package._data = {
+            'width': width,
+            'height': height,
+            'length': length,
+        }
+        if weight is not None:
+            package._data['weight'] = weight
+        if weight_units is not None:
+            package._data['weight_units'] = weight_units
+        if size_units is not None:
+            package._data['size_units'] = size_units
+        if name is not None:
+            package._data['name'] = name
+
+        resp = package.put()
+        package._data.update(resp)
+
+        return package
+
+    @classmethod
+    def list(cls, cursor=None, limit=None):
+        """
+        List all user-defined box types.
+        :param cursor: The cursor offset (optional).
+        :param limit: The number of boxes to get (optional, default: 10).
+        :return: Dict with keys 'cursor', 'previousCursor' and 'results'.
+            'results' is a list of boxes as a dict.
+        """
+        package = Package()
+        data = {}
+        if cursor is not None:
+            data['cursor'] = cursor
+        if limit is not None:
+            data['limit'] = limit
+        res = package.get(params=data)
+
+        return res.get('results'), res['cursor'], res['previousCursor']
 
 
 def track_by_reference(tracking_number):
@@ -226,81 +311,3 @@ def get_rate(carrier, to_zip, weight, from_zip=None, service='ground'):
 
 def get_token():
     return HTTPTransport.get('/v1/token')
-
-
-def void_shipment(id):
-    """
-    Cancel shipment by ID.
-    :param id: Shipment ID.
-    :return: True if when shipment was canceled. None if shipment doesn't exist.
-    """
-    status = HTTPTransport.delete('/v1/shipments/%s/void' % id)
-    if isinstance(status, dict) and status.get('message') == 'OK':
-        return True
-
-
-def list_shipments(cursor=None, limit=None):
-    """
-    List of user defined shipments.
-    :param cursor: cursor or previousCursor for shipments list querying.
-    :param limit: Quantity of shipments per query.
-    :return: Dict with keys 'cursor', 'previousCursor' and 'results'.
-        'results' is a list of shipments as a dict.
-    """
-    data = {}
-    if cursor is not None:
-        data['cursor'] = cursor
-    if limit is not None:
-        data['limit'] = limit
-
-    return HTTPTransport.get('/v1/shipments', data)
-
-
-def create_box(width, height, length, weight=None, weight_units=None,
-               size_units=None, name=None):
-    """
-    Create a user-defined box type.
-    :param width: The width of the box (required).
-    :param height: The height of the box (required).
-    :param length: The length of the box (required).
-    :param weight: The weight of the box (optional).
-    :param weight_units:
-        The units of weight: LB, OZ, KG, G (optional, default: LB).
-    :param size_units: The units of size: IN, FT, CM, M (optional, default: IN)
-    :param name: Give this box a memorable name (optional).
-    :return: Box ID.
-    """
-    data = {
-        'width': width,
-        'height': height,
-        'length': length,
-    }
-    if weight is not None:
-        data['weight'] = weight
-    if weight_units is not None:
-        data['weight_units'] = weight_units
-    if size_units is not None:
-        data['size_units'] = size_units
-    if name is not None:
-        data['name'] = name
-
-    response = HTTPTransport.post('/v1/packages', data)
-    return response['id']
-
-
-def list_boxes(cursor=None, limit=None):
-
-    """
-    List all user-defined box types.
-    :param cursor: The cursor offset (optional).
-    :param limit: The number of boxes to get (optional, default: 10).
-    :return: Dict with keys 'cursor', 'previousCursor' and 'results'.
-        'results' is a list of boxes as a dict.
-    """
-    data = {}
-    if cursor is not None:
-        data['cursor'] = cursor
-    if limit is not None:
-        data['limit'] = limit
-
-    return HTTPTransport.get('/v1/packages', data)

@@ -200,27 +200,30 @@ class PostmasterTestCase_Urllib2(unittest.TestCase):
             service='2DAY',
         )
         # succeed
-        self.assertTrue(postmaster.void_shipment(shipment.id))
+        status = shipment.void()
+        self.assertTrue(status)
         # fail
-        self.assertFalse(postmaster.void_shipment(893457898937834589))
+        status = postmaster.Shipment(id=893457898937834589).void()
+        self.assertFalse(status)
 
     def testListShipments(self):
-        response = postmaster.list_shipments()
-        self.assertIn('cursor', response)
-        self.assertIn('previousCursor', response)
+        shipments, cursor, prev_cursor = postmaster.Shipment.list()
+        self.assertIsInstance(cursor, unicode)
+        self.assertIsInstance(prev_cursor, unicode)
 
     def testCreateBox(self):
+        # succeed
+        package = postmaster.Package().create(12, 23, 34)
+        self.assertIsInstance(package.id, int)
+        self.assertEqual(package.width, 12)
         # fail
         with self.assertRaises(postmaster.InvalidDataError):
-            postmaster.create_box(1, 2, '345asd')
-        # succeed
-        box_id = postmaster.create_box(1, 2, 3)
-        self.assertIsInstance(box_id, int)
+            postmaster.Package().create(1, 2, '345asd')
 
     def testListBoxes(self):
-        response = postmaster.list_boxes()
-        self.assertIn('cursor', response)
-        self.assertIn('previousCursor', response)
+        packages, cursor, prev_cursor = postmaster.Package.list()
+        self.assertIsInstance(cursor, unicode)
+        self.assertIsInstance(prev_cursor, unicode)
 
 class PostmasterTestCase_Urlfetch(PostmasterTestCase_Urllib2):
     def setUp(self):

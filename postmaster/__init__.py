@@ -191,8 +191,7 @@ class Shipment(PostmasterObject):
         List of user defined shipments.
         :param cursor: cursor or previousCursor for shipments list querying.
         :param limit: Quantity of shipments per query.
-        :return: Dict with keys 'cursor', 'previousCursor' and 'results'.
-            'results' is a list of shipments as a dict.
+        :return: Tuple with shipments list, cursor and previous cursor.
         """
         shipment = Shipment()
         data = {}
@@ -222,7 +221,7 @@ class Package(PostmasterObject):
             The units of weight: LB, OZ, KG, G (optional, default: LB).
         :param size_units: The units of size: IN, FT, CM, M (optional, default: IN)
         :param name: Give this box a memorable name (optional).
-        :return: Box ID.
+        :return: Package object.
         """
         package = Package()
         package._data = {
@@ -250,8 +249,7 @@ class Package(PostmasterObject):
         List all user-defined box types.
         :param cursor: The cursor offset (optional).
         :param limit: The number of boxes to get (optional, default: 10).
-        :return: Dict with keys 'cursor', 'previousCursor' and 'results'.
-            'results' is a list of boxes as a dict.
+        :return: Tuple with packages list, cursor and previous cursor.
         """
         package = Package()
         data = {}

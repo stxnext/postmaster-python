@@ -46,23 +46,18 @@ class PostmasterObject(object):
         Put object to server.
         """
         if id_:
-            if action == 'void':
-                response = HTTPTransport.delete(
-                    '%s/%s/%s' % (self.PATH, id_, action), headers=config.headers)
-            else:
-                response = HTTPTransport.put(
-                    action and '%s/%s/%s' % (self.PATH, id_, action) or \
-                        '%s/%s' % (self.PATH, id_),
-                    self._data, headers=config.headers)
+            response = HTTPTransport.put(
+                action and '%s/%s/%s' % (self.PATH, id_, action) or \
+                    '%s/%s' % (self.PATH, id_),
+                self._data, headers=config.headers)
         else:
             response = HTTPTransport.post(self.PATH, self._data, headers=config.headers)
         return response
-        
+
     def get(self, id_=None, action=None, params=None):
         """
         Get object(s) from server.
         """
-
         if id_:
             response = HTTPTransport.get(
                 action and '%s/%s/%s' % (self.PATH, id_, action) or \
@@ -72,6 +67,10 @@ class PostmasterObject(object):
                 self.PATH, params, headers=config.headers)
         return response
 
+    def delete(self, id_=None, action=None):
+        response = HTTPTransport.delete(
+            '%s/%s/%s' % (self.PATH, id_, action), headers=config.headers)
+        return response
 
 class Tracking(PostmasterObject):
     pass
@@ -181,7 +180,7 @@ class Shipment(PostmasterObject):
         Void a shipment (from an object)
         :return: True if when shipment was canceled
         """
-        status = self.put(self.id, 'void')
+        status = self.delete(self.id, 'void')
         return isinstance(status, dict) and status.get('message') == 'OK'
 
 

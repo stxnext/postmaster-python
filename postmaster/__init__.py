@@ -68,8 +68,13 @@ class PostmasterObject(object):
         return response
 
     def delete(self, id_=None, action=None):
-        response = HTTPTransport.delete(
-            '%s/%s/%s' % (self.PATH, id_, action), headers=config.headers)
+        if action:
+            url = '%s/%s/%s' % (self.PATH, id_, action),
+        else:
+            url = '%s/%s' % (self.PATH, id_),
+
+        response = HTTPTransport.delete(url, headers=config.headers)
+
         return response
 
 class Tracking(PostmasterObject):
